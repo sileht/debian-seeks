@@ -1,0 +1,13 @@
+Remove not needed licence files
+Index: seeks/src/Makefile.am
+===================================================================
+--- seeks.orig/src/Makefile.am	2010-10-20 14:10:30.000000000 +0200
++++ seeks/src/Makefile.am	2010-10-20 14:10:49.000000000 +0200
+@@ -75,7 +75,6 @@
+ 			  lsh/swl/germanST.txt \
+ 			  lsh/swl/hungarianST.txt \
+ 			  lsh/swl/italianST.txt \
+-			  lsh/swl/License.txt \
+ 			  lsh/swl/polishST.txt \
+ 			  lsh/swl/portugueseST.txt \
+ 			  lsh/swl/roumanianST.txt \

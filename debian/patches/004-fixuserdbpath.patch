@@ -1,0 +1,13 @@
+move user data in /var/lib/seeks/user.db
+Index: seeks/src/config
+===================================================================
+--- seeks.orig/src/config	2010-10-19 13:08:19.000000000 +0200
++++ seeks/src/config	2010-10-19 13:08:24.000000000 +0200
+@@ -373,6 +373,7 @@
+ #      as default location.
+ #
+ # user-db-file /path/to/file.db
++user-db-file /var/lib/seeks/user.db
+ #
+ #
+ #  3. DEBUGGING

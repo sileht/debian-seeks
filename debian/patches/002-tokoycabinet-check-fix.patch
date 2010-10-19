@@ -1,0 +1,12 @@
+Correctly check presence of tokyocabinet
+--- a/configure	2010-10-13 07:07:32.000000000 +0200
++++ b/configure.new	2010-10-13 07:07:17.000000000 +0200
+@@ -16722,7 +16722,7 @@
+ $as_echo "yes" >&6; }
+ 	tokyocabinet=true
+ fi
+-if test	$protobuf = true ; then
++if test	$tokyocabinet = true ; then
+ 
+ $as_echo "#define TC 1" >>confdefs.h
+ 

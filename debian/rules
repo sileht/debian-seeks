@@ -1,0 +1,16 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+#export DH_VERBOSE=1
+
+%:
+	dh --with quilt $@
+
+
+DEB_CONFIGURE_EXTRA_FLAGS += --enable-httpserv-plugin --enable-image-websearch-plugin
+
+DEBIAN_DIR := $(shell echo ${MAKEFILE_LIST} | awk '{print $$1}' | xargs dirname )
+
+get-orig-source:
+	cd ${DEBIAN_DIR}/../../ && uscan --force-download --rename --destdir ${CURDIR}/
+

@@ -1,0 +1,13 @@
+Remove binary used for testing purpose
+Index: seeks/src/lsh/tests/Makefile.am
+===================================================================
+--- seeks.orig/src/lsh/tests/Makefile.am	2010-10-20 13:49:45.000000000 +0200
++++ seeks/src/lsh/tests/Makefile.am	2010-10-20 14:09:12.000000000 +0200
+@@ -1,6 +1,6 @@
+ # automake for lsh
+ 
+-bin_PROGRAMS=test_mrf_query_160 gen_mrf_query_160
++noinst_PROGRAMS=test_mrf_query_160 gen_mrf_query_160
+ 
+ test_mrf_query_160_SOURCES=test-mrf-query-160.cpp
+ gen_mrf_query_160_SOURCES=gen-mrf-query-160.cpp

@@ -1,0 +1,6 @@
+001-fixlogpath.patch
+002-tokoycabinet-check-fix.patch
+003-httpserv-tokyocabinet-fix.patch
+004-fixuserdbpath.patch
+005-remove-not-needed-licence-files.patch
+006-remove-test-binaries.patch

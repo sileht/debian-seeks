@@ -1,0 +1,9 @@
+embedded-javascript-library usr/share/seeks/public/yui/3.0.0/yui/yui-min.js
+non-dev-pkg-with-shlib-symlink usr/lib/librmd160.so.0.0.0 usr/lib/librmd160.so
+non-dev-pkg-with-shlib-symlink usr/lib/libseeksdht.so.0.0.0 usr/lib/libseeksdht.so
+non-dev-pkg-with-shlib-symlink usr/lib/libseeksutils.so.0.0.0 usr/lib/libseeksutils.so
+non-dev-pkg-with-shlib-symlink usr/lib/libseekslsh.so.0.0.0 usr/lib/libseekslsh.so
+non-dev-pkg-with-shlib-symlink usr/lib/libseeksuserdb.so.0.0.0 usr/lib/libseeksuserdb.so
+non-dev-pkg-with-shlib-symlink usr/lib/libseeksplugins.so.0.0.0 usr/lib/libseeksplugins.so
+non-dev-pkg-with-shlib-symlink usr/lib/libseeksproxy.so.0.0.0 usr/lib/libseeksproxy.so
+package-name-doesnt-match-sonames librmd160-0 libseeksdht0 libseekslsh0 libseeksplugins0 libseeksproxy0 libseeksuserdb0 libseeksutils0
