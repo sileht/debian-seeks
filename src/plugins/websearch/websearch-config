@@ -1,0 +1,94 @@
+# websearch language of preference.
+# automatic detection is based on http headers.
+# default: auto
+search-language auto
+
+# max number of websearch results on a single page.
+# default: 10
+search-results-page 10
+
+# one or more enabled search engines
+# google, yahoo, bing, exalead, cuil
+search-engine google
+search-engine bing
+#search-engine cuil
+search-engine yahoo
+search-engine exalead
+#search-engine yauba
+
+# minimum number of seconds search results are kept in
+# the system cache, for reuse, update, etc...
+# default: 300
+query-context-delay 300
+
+# enables thumbnails for every of the search results
+# on the result page.
+# default: 0
+enable-thumbs 0
+
+# enables javascript use on the websearch results main page.
+# default: 0
+enable-js 0
+
+# enables background download of the content pointed to by websearch results.
+# Expected to be both slower and more bandwith demanding than the
+# default ranking system.
+# However, the advanced system has more features, such as better
+# aggregation of websearch snippets from multiple search engines,
+# preemptive caching of webpages pointed to by websearch results and automated 
+# similarity analysis and clustering of the websearch results.
+# default: 0
+enable-content-analysis 0
+
+# enables the clustering button on the interface.
+# default: 1
+enable-clustering 1
+
+## Technical configuration:
+# only modify settings below this point if you know what you are
+# doing.
+
+# Connection timeout when connecting to a search engine.
+# In seconds.
+# default: 3
+se-connect-timeout 3
+
+# Transfer timeout when connecting to a search engine.
+# In seconds.
+# default: 5
+se-transfer-timeout 5
+
+# Connection timeout when fetching content for analysis & caching.
+# In seconds.
+# default: 1
+ct-connect-timeout 1
+
+# Transfer timeout when fetching content for analysis & caching.
+# In seconds.
+# default: 3
+ct-transfer-timeout 3
+
+# Enables a more discriminative highlight of words in result snippets.
+# The highlighted words are those that discriminate the most a snippet
+# from all other snippets in the results.
+# default: 1
+extended-highlight 1
+
+# Sets a proxy through which to fetch the background URLs Seeks needs,
+# to grab search engine results and content, as required.
+# default:
+#background-proxy-addr your_proxy:your_port
+
+# Renders the node IP address in the info bar, or not.
+# default: 0
+show-node-ip 0
+
+# Personalizes the result ranks based on user data from past searches
+# and proxy usage.
+# default: 1
+personalized-ranking 1
+
+# Message to be viewed in a panel next to the search results.
+# Supported are plain text and text with html tags.
+# default:
+#result-message Beware, you are using a remote Seeks node

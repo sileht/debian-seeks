@@ -1,0 +1,612 @@
+# Process this file with autoconf to produce a configure script.
+#
+# Copyright (C) 2006, 2009, 2010 Emmanuel Benazera, juban@.free.fr
+#
+# Permission is hereby granted to distribute this software for
+# non-commercial research purposes, provided that this copyright
+# notice is included with any such distribution.
+#
+# THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND,
+# EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+# SOFTWARE IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU
+# ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+#
+
+AC_INIT(Seeks, 0.3.0, ebenazer@seeks-project.info)
+AC_CONFIG_SRCDIR(Makefile.am)
+AM_INIT_AUTOMAKE
+AM_CONFIG_HEADER(config.h)
+AC_CONFIG_MACRO_DIR([m4])
+
+# Version number.
+AC_SUBST(SEEKS_VERSION_MAJOR)
+AC_SUBST(SEEKS_VERSION_MINOR)
+AC_SUBST(SEEKS_VERSION_POINT)
+AC_SUBST(SEEKS_CODE_STATUS)
+
+AC_DEFINE(SEEKS_VERSION_MAJOR,"0","")
+AC_DEFINE(SEEKS_VERSION_MINOR,"3","")
+AC_DEFINE(SEEKS_VERSION_POINT,"0","")
+AC_DEFINE(SEEKS_VERSION,"0.3","")
+AC_DEFINE(SEEKS_CODE_STATUS,"stable","")
+
+# Checks for programs.
+AC_PROG_CXX
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_LIBTOOL
+
+# Set the language.
+AC_LANG(C++)
+
+# Checks for libraries.
+AC_SEARCH_LIBS(accept, socket)
+AC_SEARCH_LIBS(gethostbyname, nsl)
+
+#=================================================================
+# Thread support.
+#=================================================================
+AC_CHECK_HEADER(pthread.h, [have_pthread=yes], [have_pthread=no])
+
+AC_ARG_ENABLE(pthread,
+[  --disable-pthread               Don't use POSIX threads (pthreads)],
+[if test $enableval = no; then
+  # Disable pthreads                                                                                                                      
+  if test $have_pthread = yes; then
+     AC_MSG_WARN([pthreads seem to be available but you are using --disable-pthread.])
+     AC_MSG_WARN([This is almost always a mistake and can render Seeks' proxy unacceptable slow.])
+  fi
+  have_pthread=no
+fi])
+
+if test $have_pthread = yes; then
+  PTHREAD_ONLY=
+  AC_DEFINE(FEATURE_PTHREAD,1,"pthreads")
+  echo Using POSIX threads
+  if test "$GCC" = "yes"; then
+    # Set a GCC specific switch:                                                                                       
+    if test "$target_type" = "unix"; then
+      ac_jgf_save_CFLAGS=$CFLAGS
+      CFLAGS="$CFLAGS -pthread"
+      AC_TRY_LINK([#include <pthread.h>],                                                                                   
+         [void *p = pthread_create;],
+        [
+	# This compiler switch makes GCC on Linux thread-safe                                                                           
+        # However, it's not supported on most other OS.                                               
+	  PTHREAD_LIB=
+          SPECIAL_CFLAGS="-pthread"
+        ])
+      CFLAGS=$ac_jgf_save_CFLAGS
+    fi
+  fi
+else
+  PTHREAD_ONLY=#                                                                                                               
+  echo Using native threads
+fi
+
+# Checks for header files.
+AC_HEADER_STDC
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_STDBOOL
+AC_C_CONST
+AC_C_INLINE
+AC_TYPE_SIZE_T
+
+# Checks for library functions.
+AC_FUNC_MALLOC
+AC_FUNC_REALLOC
+AC_CHECK_FUNCS([access atexit getcwd gethostbyaddr gethostbyaddr_r gethostbyname gethostbyname_r gettimeofday localtime_r gmtime_r inet_ntoa memchr memmove memset poll putenv random regcomp select setlocale snprintf socket strchr strdup strndup strerror strftime strlcat strlcpy strptime strstr strtoul timegm tzset])
+
+#=================================================================
+# Support for thread-safe versions of gethostbyaddr, gethostbyname,
+#=================================================================
+# Next line needed to find the gethost*_r functions on Solaris                                                                          
+AC_CHECK_LIB(nsl, gethostbyname)
+
+AC_CHECK_FUNC(gethostbyaddr_r, [
+  AC_MSG_CHECKING([signature of gethostbyaddr_r])
+  AC_TRY_COMPILE([
+  #       include <netdb.h> 
+], [
+    struct hostent *h, *hp;
+    char *a, *b;
+    int l, bl, t, e;
+    (void) gethostbyaddr_r(a, l, t, h, b, bl, &hp, &e)
+  ], [
+    AC_DEFINE(HAVE_GETHOSTBYADDR_R_8_ARGS,1,"")
+    AC_MSG_RESULT([8 args])
+  ], [
+    AC_TRY_COMPILE([
+    #       include <netdb.h> 
+], [
+      struct hostent *h;
+      char *a, *b;
+      int l, bl, t, e;
+      (void) gethostbyaddr_r(a, l, t, h, b, bl, &e)
+    ], [
+      AC_DEFINE(HAVE_GETHOSTBYADDR_R_7_ARGS,1,"")
+      AC_MSG_RESULT([7 args])
+    ], [
+      AC_TRY_COMPILE([
+      #       include <netdb.h> 
+], [
+        struct hostent_data *d;
+        struct hostent *h;
+        char a,
+        int l, t;
+        (void) gethostbyaddr_r(a, l, t, h, d)
+      ], [
+        AC_DEFINE(HAVE_GETHOSTBYADDR_R_5_ARGS,1,"")
+        AC_MSG_RESULT([5 args])
+      ], [
+        AC_MSG_RESULT(unrecognised)
+      ])
+    ])
+  ])
+], [
+  AC_MSG_RESULT(no)
+])
+
+AC_CHECK_FUNC(gethostbyname_r, [
+  AC_MSG_CHECKING([signature of gethostbyname_r])
+  AC_TRY_COMPILE([
+#   include <netdb.h>
+ ], [
+    struct hostent *h, *r;
+    char *n, *b;
+    int bl, e;
+    (void) gethostbyname_r(n, h, b, bl, &r, &e)
+  ], [
+    AC_DEFINE(HAVE_GETHOSTBYNAME_R_6_ARGS,1,"")
+    AC_MSG_RESULT([6 args])
+  ], [
+    AC_TRY_COMPILE([
+#     include <netdb.h>
+], [
+      struct hostent *h;
+      char *n, *b;
+      int bl, e;
+      (void) gethostbyname_r(n, h, b, bl, &e)
+    ], [
+      AC_DEFINE(HAVE_GETHOSTBYNAME_R_5_ARGS,1,"")
+      AC_MSG_RESULT([5 args])
+    ], [
+      AC_TRY_COMPILE([
+#       include <netdb.h>
+], [
+        struct hostent_data *d;
+        struct hostent *h;
+        char *n,
+        (void) gethostbyname_r(n, h, d)
+      ], [
+        AC_DEFINE(HAVE_GETHOSTBYNAME_R_3_ARGS,1,"")
+        AC_MSG_RESULT([3 args])
+      ], [
+        AC_MSG_RESULT(unrecognised)
+      ])
+    ])
+  ])
+], [
+  AC_MSG_RESULT(no)
+])
+
+AM_CONDITIONAL(HAVE_BSD,false)
+
+#=================================================================
+# Mac OSX specific
+#=================================================================
+case "$host" in
+*-apple-darwin*) SPECIAL_CFLAGS="-Dunix";
+ AM_CONDITIONAL(HAVE_BSD,true)
+ AC_DEFINE(ON_OSX,1,"OSX")
+;;
+esac
+
+#=================================================================
+# OpenBSD specific
+#=================================================================
+case "$host" in
+*-openbsd*) 
+ SPECIAL_CFLAGS="$SPECIAL_CFLAGS -Dunix";
+ AM_CONDITIONAL(HAVE_BSD,true)
+ AC_DEFINE(ON_OPENBSD,1,"OpenBSD")
+;;
+esac
+
+#=================================================================
+# FreeBSD specific
+#=================================================================
+case "$host" in
+*-freebsd*)
+ SPECIAL_CFLAGS="$SPECIAL_CFLAGS -Dunix";
+ AM_CONDITIONAL(HAVE_BSD,true)
+;;
+esac
+
+# Checks for RFC 2553 resolver and socket functions 
+
+AC_CHECK_FUNC([getaddrinfo],
+   [AC_CHECK_FUNC([getnameinfo],
+      [AC_DEFINE([HAVE_RFC2553], [1],
+         [Define if RFC 2553 resolver functions like getaddrinfo(3) and
+          getnameinfo(3) present])
+      ])
+])
+
+#=================================================================
+# NetBSD specific
+#=================================================================
+case "$host" in
+*-netbsd*)
+ SPECIAL_CFLAGS="$SPECIAL_CFLAGS -Dunix";
+ AM_CONDITIONAL(HAVE_BSD,true)
+;;
+esac
+
+# Checks for RFC 2553 resolver and socket functions
+
+AC_CHECK_FUNC([getaddrinfo],
+[AC_CHECK_FUNC([getnameinfo],
+[AC_DEFINE([HAVE_RFC2553], [1],
+[Define if RFC 2553 resolver functions like getaddrinfo(3) and
+getnameinfo(3) present])
+])
+])
+
+#==========================================================================
+# Setting flags
+#==========================================================================
+
+#- debug flag
+AC_ARG_ENABLE(debug,
+AC_HELP_STRING([--enable-debug],[Enable debug output (default is NO)]),
+[case "${enableval}" in
+        yes) debug=true ;;
+	        no) debug=false ;;
+		        *) AC_MSG_ERROR(bad_value ${enableval} for
+--enable-debug) ;;
+esac],[debug=false])
+AM_CONDITIONAL(DEBUG,test x$debug = xtrue)
+if test x$debug = xtrue; then
+        AC_DEFINE(HAVE_DEBUG,1,"debug output")
+fi
+
+#- perl flag
+AC_ARG_ENABLE(perl,
+AC_HELP_STRING([--enable-perl],[Enable uses of the Perl interpreter (default is NO)]),
+[case "${enableval}" in
+        yes) perl=true ;;
+                no) perl=false ;;
+                        *) AC_MSG_ERROR(bad_value ${enableval} for
+--enable-perl) ;;
+esac],[perl=false])
+if test x$perl = xtrue; then
+AC_PATH_PROG([PERL],[perl])
+AS_IF([test -n "$PERL"],[
+  AC_DEFINE(HAVE_PERL,1,Perl)
+  AM_CONDITIONAL(USE_PERL,true)
+  ],[])
+else
+  AM_CONDITIONAL(USE_PERL,false)
+fi
+
+#==========================================================================
+# Finding curl
+#==========================================================================
+# First, check for the curl-config tool
+AC_PATH_PROGS(CURL_CONFIG, curl-config, no)
+if test x$CURL_CONFIG = xno; then
+   AC_MSG_ERROR(curl-config not found; verify that libcurl is installed on your system)
+fi
+   
+CURL_LDADD=`$CURL_CONFIG --libs`
+AC_SUBST(CURL_LDADD)
+
+CURL_CFLAGS=`$CURL_CONFIG --cflags`
+AC_SUBST(CURL_CFLAGS)
+
+#==========================================================================
+# Finding libxml2
+#========================================================================== 
+# First, check for the xml2-config tool
+AC_PATH_PROGS(XML2_CONFIG, xml2-config, no)
+if test x$XML2_CONFIG = xno; then
+   AC_MSG_ERROR(xml2-config not found; verify that libxml2 is installed on your system)
+fi
+
+XML2_LDADD=`$XML2_CONFIG --libs`
+AC_SUBST(XML2_LDADD)
+
+XML2_CFLAGS=`$XML2_CONFIG --cflags`
+AC_SUBST(XML2_CFLAGS)
+
+#==========================================================================
+# Finding libpcre
+#==========================================================================
+AC_PATH_PROGS(PCRE_CONFIG, pcre-config, no)
+if test x$PCRE_CONFIG = xno; then
+   AC_MSG_ERROR(pcre-config not found; verify that libpcre is installed on your system)
+fi
+
+PCRE_LDADD=`$PCRE_CONFIG --libs`
+AC_SUBST(PCRE_LDADD)
+
+PCRE_CFLAGS=`$PCRE_CONFIG --cflags`
+AC_SUBST(PCRE_CFLAGS)
+
+#==========================================================================
+# Finding docbook2x-man
+#==========================================================================
+AC_CHECK_PROG(docbook,docbook2x-man,yes,no)
+if test $docbook = "yes"; then
+   AM_CONDITIONAL(HAVE_DOCBOOK2X,true)
+else 
+   AM_CONDITIONAL(HAVE_DOCBOOK2X,false)
+fi
+
+#====================================================                                                    
+# This check is incomplete. For mingw32 zlib is found                                                                
+# by configure, but not necessarily by the compiler.
+#====================================================                                         
+AC_ARG_ENABLE(zlib,
+AC_HELP_STRING([--disable-zlib], [Don't use zlib to decompress data before filtering (default is NO)]),
+[enableval2=$enableval],
+[enableval2=yes])
+if test $enableval2 = yes; then
+  AC_CHECK_LIB(z, zlibVersion, [have_zlib="yes"], [have_zlib="no"])
+  if test $have_zlib = "yes"; then
+    LIBS="$LIBS -lz"
+    AC_DEFINE(FEATURE_ZLIB,1,[Define to 1 to use compression through the zlib library.])
+  else
+   AC_MSG_WARN([No zlib found.
+   The proxy will not be able to filter compressed content.
+   This may become a fatal error in the future.])
+  fi
+fi
+
+#====================================================
+# check for TR1 unordered_map and unordered_set headers 
+#====================================================
+AC_CHECK_HEADER([tr1/unordered_map], 
+[AC_CACHE_CHECK([for TR1 unordered_map and unordered_set], 
+ _cv_stdtr1mapset, 
+ [AC_TRY_COMPILE([#include <tr1/unordered_map> 
+    		  #include <tr1/unordered_set>], 
+    		 [std::tr1::unordered_map<double*, char*, std::tr1::hash<double*>, std::equal_to<double*> > test1; 
+                  std::tr1::unordered_set<char*, std::tr1::hash<char*>, std::equal_to<char*> > test2;], 
+                 _cv_stdtr1mapset=yes, 
+    	         _cv_stdtr1mapset=no) ] )], [],  [ ] )
+if test "$_cv_stdtr1mapset" = yes; then 
+  AC_DEFINE(HAVE_TR1_HASH_MAP,1,"Have tr1 hash map") 
+fi 
+
+#====================================================
+# HTTP server plugin activation.
+#====================================================
+AC_ARG_ENABLE(httpserv-plugin,
+AC_HELP_STRING([--enable-httpserv-plugin],[Enable the Seeks HTTP server plugin (default is NO)]),
+[case "${enableval}" in
+        yes) httpservplugin=true ;;
+	        no) httpservplugin=false ;;
+                        *) AC_MSG_ERROR(bad_value ${enableval} for
+--enable-httpserv-plugin) ;;
+esac],[httpservplugin=false])
+AM_CONDITIONAL(HAVE_HTTPSERV_PLUGIN,test x$httpservplugin = xtrue)
+if test x$httpservplugin = xtrue; then
+   AC_DEFINE(FEATURE_HTTPSERV_PLUGIN,1,"HTTP server plugin available")
+fi
+
+#====================================================
+# Image websearch plugin activation.
+#====================================================
+AC_ARG_ENABLE(image-websearch-plugin,
+AC_HELP_STRING([--enable-image-websearch-plugin],[Enable the Seeks image websearch plugin (default is YES)]),
+[case "${enableval}" in
+        yes) imgwebsearch=true ;;
+                no) imgwebsearch=false ;;
+                        *) AC_MSG_ERROR(bad_value ${enableval} for
+--enable-image-websearch-plugin) ;;
+esac],[imgwebsearch=true])
+AM_CONDITIONAL(HAVE_IMG_WEBSEARCH_PLUGIN,test x$imgwebsearch = xtrue)
+if test x$imgwebsearch = xtrue; then
+   AC_DEFINE(FEATURE_IMG_WEBSEARCH_PLUGIN,1,"Image websearch plugin available")
+fi
+
+# Requires OpenCV >= 2.0
+if test x$imgwebsearch = xtrue; then
+   PKG_CHECK_MODULES([opencv],[opencv >= 2.0],opencv2=true,opencv2=false)
+fi
+if test x$opencv2 = xtrue; then
+   AC_DEFINE(FEATURE_OPENCV2,1,"OpenCV library is there")
+fi
+AM_CONDITIONAL(HAVE_OPENCV2,test x$opencv2 = xtrue)
+
+
+#====================================================
+# libevent detection.
+#====================================================
+trylibeventdir=""
+AC_ARG_WITH(libevent,
+[  --with-libevent=PATH    specify path to libevent installation ],
+[
+        if test "x$withval" != "xno" ; then
+           trylibeventdir=$withval
+        fi
+]
+)
+
+AC_CACHE_CHECK([for libevent], ac_cv_libevent_dir, [
+                    saved_LIBS="$LIBS"
+                    saved_LDFLAGS="$LDFLAGS"
+                    saved_CFLAGS="$CFLAGS"
+                    le_found=no
+                    for ledir in $trylibeventdir "" $prefix /usr ; do
+		    	LDFLAGS="$saved_LDFLAGS"
+						LIBS="$saved_LIBS -levent"
+						# Skip the directory if it isn't there.
+          if test ! -z "$ledir" -a ! -d "$ledir" ; then
+                   continue;
+          fi
+            
+          if test ! -z "$ledir" ; then
+          if test -d "$ledir/lib" ; then
+             LDFLAGS="-L$ledir/lib $LDFLAGS"
+          else
+             LDFLAGS="-L$ledir $LDFLAGS"
+fi
+if test -d "$ledir/include" ; then CPPFLAGS="-I$ledir/include $CFLAGS"
+else CPPFLAGS="-I$ledir $CFLAGS"
+fi
+fi
+
+# attempt to compile and link
+AC_TRY_LINK([
+#include <sys/time.h>
+#include <sys/types.h>
+#include <event.h>
+], [ event_init(); ],
+[ libevent_linked=yes ],
+[ libevent_linked=no ])
+if test $libevent_linked = yes; then
+if test ! -z "$ledir" ; then
+   ac_cv_libevent_dir=$ledir
+else
+   ac_cv_libevent_dir="(system)"
+fi
+   le_found=yes
+   break
+fi
+done
+LIBS="$saved_LIBS"
+LDFLAGS="$saved_LDFLAGS"
+CPPFLAGS="$saved_CPPFLAGS"
+if test $le_found = no ; then
+if test $httpserv-plugin = true ; then
+ AC_MSG_ERROR([libevent not found!
+   You can get it here: http://www.monkey.org/~provos/libevent/
+   If it's already installed, specify its path using --with-libevent=PATH
+ ])
+fi
+fi
+])
+#LIBS="$LIBS -levent"
+if test "$ac_cv_libevent_dir" != "(system)"; then
+   if test -d "$ac_cv_libevent_dir/lib" ; then
+      LDFLAGS="-L$ac_cv_libevent_dir/lib $LDFLAGS"
+      le_libdir="$ac_cv_libevent_dir/lib"
+   else
+      LDFLAGS="-L$ac_cv_libevent_dir $LDFLAGS"
+      le_libdir="$ac_cv_libevent_dir"
+fi
+if test -d "$ac_cv_libevent_dir/include" ; then
+ CPPFLAGS="-I$ac_cv_libevent_dir/include $CPPFLAGS"
+else
+ CPPFLAGS="-I$ac_cv_libevent_dir $CPPFLAGS"
+fi
+fi
+
+AM_CONDITIONAL(HAVE_LIBEVENT,test x$le_found = xtrue)
+
+# plugin variables.
+AC_SUBST(uricapture,true)
+AC_SUBST(querycapture,true)
+AC_SUBST(cf,true)
+
+# check on protocol buffers.
+PKG_CHECK_MODULES([protobuf],[protobuf >= 2.2],protobuf=true,protobuf=false)
+if test $protobuf = true ; then
+   AC_DEFINE(PROTOBUF,1,"Protocol buffers available")
+fi
+AM_CONDITIONAL(HAVE_PROTOBUF,test x$protobuf = xtrue)
+if test $protobuf = false ; then
+   AC_SUBST(uricapture,false)
+   AC_SUBST(querycapture,false)
+   AC_SUBST(cf,false)
+fi
+
+# check on tokyo cabinet.
+PKG_CHECK_MODULES([tokyocabinet],[tokyocabinet],tokyocabinet=true,tokyocabinet=false)
+if test	$protobuf = true ; then
+   AC_DEFINE(TC,1,"Tokyocabinet available")
+fi
+AM_CONDITIONAL(HAVE_TC,test x$tokyocabinet = xtrue)
+if test $tokyocabinet = false ; then
+   AC_SUBST(uricapture,false)
+   AC_SUBST(querycapture,false)
+   AC_SUBST(cf,false)
+fi
+
+# connection keep alive
+AC_ARG_ENABLE(keepalive,
+AC_HELP_STRING([--enable-keepalive],[Enable keeping outgoing connections alive (default is NO)]),
+[case "${enableval}" in
+        yes) keepalive=true ;;
+                no) keepalive=false ;;
+                        *) AC_MSG_ERROR(bad_value ${enableval} for
+--enable-keepalive) ;;
+esac],[keepalive=false])
+AM_CONDITIONAL(KEEP_ALIVE,test x$keepalive = xtrue)
+if test x$keepalive = xtrue; then
+   AC_DEFINE(FEATURE_CONNECTION_KEEP_ALIVE,1,"Keep outgoing connections alive if possible")
+fi
+
+# extended host patterns.
+AC_ARG_ENABLE(extended-host-patterns,
+AC_HELP_STRING([--enable-extended-host-patterns Allow extended regular expressions in host patterns (default is NO)]),
+[if test $enableval = yes; then
+  AC_DEFINE(FEATURE_EXTENDED_HOST_PATTERNS,1,"Allow extended regular expressions in host patterns")
+fi])
+
+# remaining configuration flags.
+AC_DEFINE(STATIC_PCRS,1,"using internal pcrs")
+AC_DEFINE(FEATURE_STATISTICS,1,"Enables statistics function")
+AC_DEFINE(FEATURE_FAST_REDIRECTS,1,"Supports fast redirects")
+AC_DEFINE(FEATURE_ACL,1,"Allows the user of an ACL to control access to the proxy by IP address")
+# AC_DEFINE(FEATURE_FORCE_LOAD,1,"Bypass filtering for 1 page only")
+AC_DEFINE(FEATURE_TOGGLE,1,"Allow Seeks proxy to be disabled")
+
+AC_CONFIG_FILES(Makefile doc/Makefile src/Makefile \
+src/lsh/Makefile \
+src/lsh/tests/Makefile \
+src/dht/Makefile \
+src/dht/tests/Makefile \
+src/proxy/Makefile \
+src/proxy/tests/Makefile \
+src/plugins/Makefile \
+src/plugins/websearch/Makefile \
+src/plugins/websearch/tests/Makefile \
+src/plugins/img_websearch/Makefile \
+src/plugins/img_websearch/tests/Makefile \
+src/plugins/httpserv/Makefile \
+src/plugins/blocker/Makefile \
+src/plugins/uri_capture/Makefile \
+src/plugins/query_capture/Makefile \
+src/plugins/cf/Makefile \
+src/utils/Makefile)
+
+AC_OUTPUT
+
+AC_MSG_NOTICE([Configured to build seeks:
+
+ Seeks version:		  ${VERSION}
+ Code status:		  ${cstatus}
+ Host setup:		  ${host}
+ Install prefix:	  ${prefix}
+ Compiler:		  ${CC} 
+ 
+ Dependencies:
+ OpenCV-2.x:		  ${opencv2}
+ libevent:		  ${le_found}
+ protobuf:                ${protobuf}
+ tokyocabinet: 		  ${tokyocabinet}
+
+ Enabled plugins:
+ image websearch:	  ${imgwebsearch}
+ HTTP server:		  ${httpservplugin}
+ query capture:		  ${querycapture}
+ URI capture:		  ${uricapture}
+ Personalization:	  ${cf} 
+])

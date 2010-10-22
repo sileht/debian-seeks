@@ -1,0 +1,5 @@
+.google..*/(search|custom)\?
+# .co.uk
+.google..*..*/(search|custom)\?
+.bing..*/search\?
+.cuil.com/search\?
