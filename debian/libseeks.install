@@ -1,0 +1,3 @@
+usr/lib/*/librmd160.so.*
+usr/lib/*/libseeks*.so.*
+usr/lib/seeks/plugins/*/*.so.*

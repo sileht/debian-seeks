@@ -1,0 +1,19 @@
+seeks packaging for Debian
+---------------------------
+
+seeks is maintained with git-buildpackage at https://github.com/sileht/debian-seeks 
+
+It uses the common dpatch patch system, see
+/usr/share/doc/dpatch/README.source.gz for details.
+
+
+About seeks:
+* bug tracker is here: http://redmine.seeks-project.info/issues/
+* seeks need compiling with --Wl,--no-as-needed, plugins are not linked in good order (http://redmine.seeks-project.info/issues/368)
+* make test can't be donne because it depend on "libgtest-dev 1.5.0" and debian as ""libgtest-dev 1.6.0"
+* debian package provide a init script to quickly setup a seeks node, daemon run as user seeks
+* Two patches are provided: 
+  - one to move logfile in /var/log/seeks.log
+  - second to move userdb on /var/lib/seeks/user.db
+
+

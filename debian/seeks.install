@@ -1,0 +1,5 @@
+usr/bin/seeks*
+usr/share/seeks/*
+etc/seeks/*
+usr/share/man/man1/*
+usr/share/man/*man1/*
