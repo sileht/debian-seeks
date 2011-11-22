@@ -1,0 +1,112 @@
+AM_CPPFLAGS=
+AM_LDFLAGS=
+LDADD=
+
+if HAVE_PROTOBUF
+if HAVE_TC
+AM_CPPFLAGS += \
+	-I$(top_srcdir)/src/plugins/uri_capture \
+	-I$(top_srcdir)/src/plugins/query_capture \
+	-I$(top_srcdir)/src/plugins/cf \
+	-I$(top_srcdir)/src/plugins/udb_service
+
+AM_LDFLAGS += \
+	-L$(top_builddir)/src/plugins/uri_capture \
+	-L$(top_builddir)/src/plugins/query_capture \
+	-L$(top_builddir)/src/plugins/cf \
+	-L$(top_builddir)/src/plugins/udb_service
+
+LDADD += \
+        -luricaptureplugin \
+	-lquerycaptureplugin \
+	-lcfplugin \
+	-ludbserviceplugin
+endif
+endif
+
+if HAVE_IMG_WEBSEARCH_PLUGIN
+AM_CPPFLAGS += \
+	-I$(top_srcdir)/src/plugins/img_websearch \
+	`pkg-config opencv --cflags`
+
+AM_LDFLAGS += \
+       -L$(top_builddir)/src/plugins/img_websearch \
+       `pkg-config opencv --libs`
+
+LDADD += \
+       -lseeksimgwebsearchplugin
+endif
+
+if HAVE_PROTOBUF
+AM_CPPFLAGS += \
+	`pkg-config --cflags protobuf`
+
+AM_LDFLAGS += \
+	`pkg-config --libs protobuf`
+
+if HAVE_TC
+AM_CPPFLAGS += \
+	`pkg-config --cflags tokyocabinet`
+AM_LDFLAGS += \
+        `pkg-config --libs tokyocabinet`
+endif
+
+if HAVE_TT
+AM_CPPFLAGS += \
+        `pkg-config --cflags tokyotyrant`
+AM_LDFLAGS += \
+      	   `pkg-config --libs tokyotyrant`
+endif
+
+LDADD += \
+	-lseeksuserdb -lseeksuserdbfix
+endif
+
+AM_CPPFLAGS += \
+	     -Wall -g -Wno-deprecated -pipe \
+	     -I${srcdir} \
+	     -I${srcdir}/.. \
+	     -I${top_srcdir}/src/dht \
+	     -I${top_srcdir}/src/lsh \
+	     -I${top_srcdir}/src/proxy \
+	     -I${top_srcdir}/src/utils \
+	     -I$(top_srcdir)/src/plugins/websearch \
+	     -I$(top_srcdir)/src/plugins/websearch_api_compat \
+	     @PCRE_CFLAGS@ \
+	     @XML2_CFLAGS@ \
+	     @ICU_CFLAGS@ \
+	     $(GTEST_CPPFLAGS)
+
+AM_LDFLAGS += \
+        -L.. \
+	-L$(top_builddir)/src/dht \
+	-L$(top_builddir)/src/lsh \
+	-L$(top_builddir)/src/proxy \
+	-L$(top_builddir)/src/utils \
+	-L$(top_builddir)/src/plugins/websearch \
+	-L$(top_builddir)/src/plugins/websearch_api_compat \
+	$(GTEST_LDFLAGS)
+
+LDADD += \
+	-lseeksdht \
+	-lseekslsh \
+	-lseeksproxy \
+	-lseeksplugins \
+	-lseeksutils \
+	-lseekswebsearchplugin \
+	-lseekswebsearchapicompatplugin \
+	-lrmd160 @XML2_LDADD@ @CURL_LDADD@ @ICU_LDADD@ @PTHREAD_LDADD@ -lpcreposix -lpcre -lz @LCOV_LIBS@ $(GTEST_LIBS)
+
+if USE_PERL
+AM_LDFLAGS += `perl -MExtUtils::Embed -e ldopts`
+endif
+
+if HAVE_XSLSERIALIZER_PLUGIN
+AM_CPPFLAGS += -I${top_srcdir}/src/plugins/xsl_serializer \
+     @XSLT_CFLAGS@ 
+AM_LDFLAGS += \
+	-L$(top_builddir)/src/plugins/xsl_serializer 
+LDADD += \
+      -lseeksxslserializerplugin \
+      @XSLT_LDADD@
+endif

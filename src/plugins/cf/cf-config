@@ -1,0 +1,49 @@
+# Weight given to domain names (as opposed to exact URLs).
+# This is a measure of trust / likeliness of an already visited domain
+# to hold good / interesting URL (wrt. content).
+# default: 0.3
+domain-name-weight 0.3
+
+# Timeout on cached remote records, in seconds.
+# 0 means no cache at all.
+# default: 600
+record-cache-timeout 600
+
+# Static list of peers for collaborative filtering.
+# One of more lines, of the form: cf-peer address port (sn | bsn | tt)
+# 'sn' for HTTP transport to Seeks node (current default), 
+# 'bsn' for HTTP batch transport to Seeks node (soon to be default),
+# 'tt' for serving a peer user database with Tokyo Tyrant.
+# default: unset
+cf-peer http://www.seeks.fr bsn
+cf-peer http://seeks-project.info/search_exp.php bsn
+cf-peer http://seeks-project.info/search.php bsn
+
+# Time interval in seconds between two check on dead peers.
+# default: 300
+dead-peer-check 300
+
+# Number of retries before marking a peer as dead.
+dead-peer-retries 3
+
+# Posted URL check.
+# checks whether a posted URL exists, and tries to retrieve the page
+# and its title.
+# default: 1
+post-url-check 1
+
+# 'user-agent' header for checking URL.
+# when the above option is enabled, and no 'user-agent' header is
+# passed to Seeks, this is the default header to be used.
+# default: Mozilla/5.0 (X11; Linux x86_64; rv:2.0.1) Gecko/20100101 Firefox/4.0.1
+post-ua Mozilla/5.0 (X11; Linux x86_64; rv:2.0.1) Gecko/20100101 Firefox/4.0.1
+
+# Posted query similarity radius.
+# defines the similarity radius of the query to which the posted URL
+# is to be attached.
+# default: 5
+post-radius 5
+
+# Whether to filter queries with stop words.
+# default: 0
+stop-words-filtering 0
